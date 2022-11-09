@@ -6,43 +6,74 @@ and prepare a GCP mount for cloudfuse.
 """
 
 import click
+import tempfile
+import os
+
 import hailtop.batch as hb
 from hailtop.batch.job import Job
 from cpg_utils import to_path
-from cpg_utils.hail_batch import image_path, reference_path, command
-from cpg_workflows.batch import get_batch
+from cpg_utils.config import get_config
+from cpg_utils.hail_batch import image_path, reference_path, command, dataset_path
+# from cpg_workflows.batch import get_batch
 
 
+# replace cpg_workflows.batch.get_batch()
+def get_batch(name: str | None = None) -> hb.batch.Batch:
+    # omit global.
+
+    if get_config()['hail'].get('backend', 'batch') == 'local':
+        print('Initialising Hail Batch with local backend')
+        backend = hb.LocalBackend(
+            tmp_dir=tempfile.mkdtemp('batch-tmp'),
+        )
+    else:
+        print('Initialising Hail Batch with service backend')
+        backend = hb.ServiceBackend(
+            billing_project=get_config()['hail']['billing_project'],
+            remote_tmpdir=dataset_path('batch-tmp', category='tmp'),
+            token=os.environ.get('HAIL_TOKEN'),
+        )
+    
+    return hb.batch.Batch(
+        name = name or get_config()['workflow'].get('name'),
+        backend=backend, 
+        default_memory=get_config()['hail'].get('default_memory')
+    )
+
+    
 @click.command()
 @click.argument('vep_version')
 def main(vep_version: str):
     """
     Build VEP VEP_VERSION cache and LOFTEE bundle
     """
-    b = get_batch(f'Copy VEP v{vep_version} data')
 
+    # b = get_batch(f'Copy VEP v{vep_version} data')
+
+    print(f"image_path(vep) = {image_path('vep')}")
     assert image_path('vep').split(':')[-1] == vep_version, (
         image_path('vep').split(':')[-1], vep_version
     )
+    print(f"reference_path(vep_mount) = {reference_path('vep_mount')}")
     assert reference_path('vep_mount').parent.name == vep_version, (
         reference_path('vep_mount').parent.name == vep_version
     )
 
-    j1 = _make_vep_cache_tar(b)
-    j2 = _make_loftee_tar(b)
-    j3 = _prepare_mountable_bucket(b)
-    if j3:
-        if j1:
-            j3.depends_on(j1)
-        if j2:
-            j3.depends_on(j2)
-    j4 = _test_mount(b)
-    if j3:
-        j4.depends_on(j3)
+    # j1 = _make_vep_cache_tar(b)
+    # j2 = _make_loftee_tar(b)
+    # j3 = _prepare_mountable_bucket(b)
+    # if j3:
+    #     if j1:
+    #         j3.depends_on(j1)
+    #     if j2:
+    #         j3.depends_on(j2)
+    # j4 = _test_mount(b)
+    # if j3:
+    #     j4.depends_on(j3)
 
-    res = b.run()
-    res_status = res.status()
-    assert res_status['state'] == 'success', str((res_status, res.debug_info()))
+    # res = b.run()
+    # res_status = res.status()
+    # assert res_status['state'] == 'success', str((res_status, res.debug_info()))
 
 
 def _make_vep_cache_tar(b: hb.Batch) -> Job | None:
