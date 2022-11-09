@@ -48,18 +48,16 @@ def main(vep_version: str):
     Build VEP VEP_VERSION cache and LOFTEE bundle
     """
 
-    # b = get_batch(f'Copy VEP v{vep_version} data')
+    b = get_batch(f'Copy VEP v{vep_version} data')
 
-    print(f"image_path(vep) = {image_path('vep')}")
     assert image_path('vep').split(':')[-1] == vep_version, (
         image_path('vep').split(':')[-1], vep_version
     )
-    print(f"reference_path(vep_mount) = {reference_path('vep_mount')}")
     assert reference_path('vep_mount').parent.name == vep_version, (
         reference_path('vep_mount').parent.name == vep_version
     )
 
-    # j1 = _make_vep_cache_tar(b)
+    j1 = _make_vep_cache_tar(b)
     # j2 = _make_loftee_tar(b)
     # j3 = _prepare_mountable_bucket(b)
     # if j3:
@@ -71,9 +69,9 @@ def main(vep_version: str):
     # if j3:
     #     j4.depends_on(j3)
 
-    # res = b.run()
-    # res_status = res.status()
-    # assert res_status['state'] == 'success', str((res_status, res.debug_info()))
+    res = b.run()
+    res_status = res.status()
+    assert res_status['state'] == 'success', str((res_status, res.debug_info()))
 
 
 def _make_vep_cache_tar(b: hb.Batch) -> Job | None:
