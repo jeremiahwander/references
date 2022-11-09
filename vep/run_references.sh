@@ -1,7 +1,8 @@
 analysis-runner \
   --dataset severalgenomes \
   --description "VEP reference import" \
+  --config vep/references_global.toml \
   -o "vep" \
   --access-level test \
   vep/copy-references.py \
-    --vep_version 105.0
+    105.0
