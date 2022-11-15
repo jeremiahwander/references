@@ -69,7 +69,7 @@ def main(vep_version: str):
     # if j3:
     #     j4.depends_on(j3)
 
-    res = b.run()
+    res = b.run(wait=False)
     res_status = res.status()
     assert res_status['state'] == 'success', str((res_status, res.debug_info()))
 
@@ -80,6 +80,7 @@ def _make_vep_cache_tar(b: hb.Batch) -> Job | None:
     """
     cache_path = reference_path('vep_mount').parent / 'cache.tar'
     if cache_path.exists():
+        print("_make_vep_cache_tar -> Nothing to do")
         return None
 
     j = b.new_job('Copy VEP cache with vep_install')
@@ -108,6 +109,7 @@ def _make_loftee_tar(b: hb.Batch) -> Job | None:
     """
     loftee_path = reference_path('vep_mount').parent.parent / 'loftee.tar'
     if loftee_path.exists():
+        print("_make_loftee_tar -> Nothing to do")
         return None
 
     j = b.new_job('Prepare LOFTEE bundle')
